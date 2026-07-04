@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주류 환산기 — 같은 취기, 다른 병</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/static/pretendard.min.css" />
+<style>
+  :root{
+    --green-deep:#0F3D2E;
+    --green-darker:#092620;
+    --green-line: rgba(255,255,255,0.08);
+    --paper:#F6F1E2;
+    --paper-dark:#EAE2CC;
+    --ink:#1B2A22;
+    --ink-soft:#5B6459;
+    --dew:#3E7CB1;
+    --gold:#C79A3B;
+    --red:#B5482F;
+    --so-soju:#2F7A4D;
+    --so-beer:#C79A3B;
+    --so-tak:#EADFBF;
+    --so-wine:#7A2E3A;
+    --so-etc:#3E7CB1;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Pretendard', -apple-system, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 8% 12%, rgba(255,255,255,0.05) 0, transparent 40%),
+      radial-gradient(circle at 92% 85%, rgba(255,255,255,0.04) 0, transparent 45%),
+      repeating-linear-gradient(135deg, var(--green-darker) 0px, var(--green-darker) 2px, var(--green-deep) 2px, var(--green-deep) 46px);
+    padding: 48px 16px 80px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:28px;
+  }
+
+  .brand{
+    text-align:center;
+    color:var(--paper);
+  }
+  .brand .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.35em;
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+  .brand h1{
+    font-family:'Black Han Sans', sans-serif;
+    font-weight:400;
+    font-size:clamp(28px, 6vw, 42px);
+    margin:0 0 8px;
+    letter-spacing:0.01em;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.25);
+  }
+  .brand p{
+    margin:0;
+    font-size:13.5px;
+    color:rgba(246,241,226,0.72);
+    line-height:1.6;
+  }
+
+  .stage{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+  }
+
+  /* ===== 탭 ===== */
+  .tabs{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    gap:8px;
+    background:rgba(0,0,0,0.2);
+    padding:5px;
+    border-radius:999px;
+    border:1px solid var(--green-line);
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    color:rgba(246,241,226,0.65);
+    font-family:'Pretendard', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    padding:10px 8px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .tab-btn.active{
+    background:var(--gold);
+    color:var(--green-darker);
+  }
+
+  .btn.ghost{
+    width:auto;
+    background:transparent;
+    border:1.5px solid rgba(27,42,34,0.35);
+    color:var(--ink-soft);
+    padding:6px 14px;
+    font-size:11.5px;
+    border-radius:999px;
+  }
+  .btn.ghost:hover{ filter:none; border-color:var(--red); color:var(--red); }
+
+  /* ===== 탭 카운터 그리드 ===== */
+  .tap-grid{ display:flex; flex-direction:column; gap:6px; }
+  .tap-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 10px;
+    background:rgba(255,255,255,0.45);
+    border:1.5px solid rgba(27,42,34,0.15);
+    border-radius:6px;
+    cursor:pointer;
+    user-select:none;
+    transition:background .1s, transform .05s;
+  }
+  .tap-item:active{ transform:scale(0.98); background:rgba(255,255,255,0.75); }
+  .tap-item .dot{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+  .tap-item .info{ flex:1; min-width:0; }
+  .tap-item .info .n{ font-weight:700; font-size:13.5px; }
+  .tap-item .info .n .cnt{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:12.5px;
+    color:var(--dew);
+    margin-left:2px;
+  }
+  .tap-item .info .m{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--ink-soft); }
+  .tap-item .stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex:0 0 auto;
+  }
+  .tap-item .step{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:none;
+    font-weight:700;
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+  }
+  .tap-item .step:active{ transform:scale(0.92); }
+  .tap-item .step.minus{ background:rgba(181,72,47,0.14); color:var(--red); }
+  .tap-item .step.plus{ background:rgba(62,124,177,0.16); color:var(--dew); }
+  .add-row{ display:flex; gap:8px; }
+  .add-row select{ flex:1; }
+  .btn.add{
+    width:auto;
+    white-space:nowrap;
+    padding:9px 14px;
+    font-size:13px;
+  }
+
+  .tap-item .remove{
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+    flex:0 0 auto;
+    padding:2px 4px;
+  }
+  .tap-item .remove:hover{ color:var(--red); }
+
+  .bk-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:12.5px;
+    padding:5px 0;
+    border-bottom:1px dashed rgba(27,42,34,0.2);
+  }
+  .bk-row .amt{ font-family:'IBM Plex Mono', monospace; color:var(--ink-soft); }
+  .bk-empty{ text-align:center; color:var(--ink-soft); font-size:12.5px; padding:14px 0; }
+
+  /* ===== 영수증 ===== */
+  .receipt{
+    width:100%;
+    background:var(--paper);
+    padding:28px 26px 40px;
+    transform: rotate(-0.6deg);
+    box-shadow:
+      0 30px 50px -20px rgba(0,0,0,0.55),
+      0 4px 0 rgba(0,0,0,0.05) inset;
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 97%,
+      95% 100%, 90% 97%, 85% 100%, 80% 97%, 75% 100%, 70% 97%, 65% 100%,
+      60% 97%, 55% 100%, 50% 97%, 45% 100%, 40% 97%, 35% 100%, 30% 97%,
+      25% 100%, 20% 97%, 15% 100%, 10% 97%, 5% 100%, 0% 97%
+    );
+    position:relative;
+  }
+  .receipt::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0px, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 3px);
+    pointer-events:none;
+  }
+
+  .r-head{ text-align:center; margin-bottom:14px; }
+  .r-head .store{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:0.08em;
+  }
+  .r-head .sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .dashed{
+    border:none;
+    border-top:1.5px dashed rgba(27,42,34,0.35);
+    margin:16px 0;
+  }
+
+  .field{ margin-bottom:12px; }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    letter-spacing:0.05em;
+    margin-bottom:5px;
+  }
+  select, input[type=number], input[type=text]{
+    width:100%;
+    font-family:'Pretendard', sans-serif;
+    font-size:14.5px;
+    padding:9px 10px;
+    border:1.5px solid rgba(27,42,34,0.25);
+    background:rgba(255,255,255,0.55);
+    border-radius:2px;
+    color:var(--ink);
+  }
+  select:focus, input:focus{
+    outline:2px solid var(--dew);
+    outline-offset:1px;
+  }
+
+  .qty-row{ display:flex; gap:10px; }
+  .qty-row .field{ flex:1; }
+
+  .hero{
+    text-align:center;
+    padding:14px 0 4px;
+  }
+  .hero .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    letter-spacing:0.08em;
+  }
+  .hero .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:30px;
+    color:var(--red);
+    margin:4px 0 2px;
+  }
+  .hero .value span{ font-size:15px; font-weight:600; }
+  .hero .sub{
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+
+  .list-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    letter-spacing:0.08em;
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
+
+  .line{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    padding:7px 0;
+    font-size:13.5px;
+  }
+  .line .dot{
+    width:7px; height:7px; border-radius:50%;
+    flex:0 0 auto;
+    margin-right:2px;
+  }
+  .line .name{
+    white-space:nowrap;
+    font-weight:600;
+  }
+  .line .fill{
+    flex:1;
+    border-bottom:1.5px dotted rgba(27,42,34,0.4);
+    transform:translateY(-4px);
+  }
+  .line .amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .line .amt small{ font-weight:500; font-size:11px; color:var(--ink-soft); }
+
+  .r-foot{
+    margin-top:16px;
+    text-align:center;
+  }
+  .r-foot .barcode{
+    display:flex;
+    justify-content:center;
+    gap:2px;
+    margin:10px 0 8px;
+    height:34px;
+  }
+  .r-foot .barcode i{
+    display:block;
+    background:var(--ink);
+    width:2px;
+  }
+  .r-foot .stamp{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    color:var(--ink-soft);
+    letter-spacing:0.04em;
+  }
+  .r-foot .thanks{
+    font-family:'Black Han Sans', sans-serif;
+    font-size:13px;
+    margin-top:6px;
+    color:var(--ink);
+  }
+
+  .note{
+    font-size:11px;
+    line-height:1.6;
+    color:rgba(246,241,226,0.55);
+    max-width:380px;
+    text-align:center;
+  }
+  .note a{ color:var(--gold); }
+
+  /* ===== 편집 패널 ===== */
+  .panel{
+    width:100%;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--green-line);
+    border-radius:8px;
+    color:var(--paper);
+    overflow:hidden;
+  }
+  .panel > summary{
+    cursor:pointer;
+    list-style:none;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.02em;
+  }
+  .panel > summary::-webkit-details-marker{ display:none; }
+  .panel > summary::after{
+    content:"펼치기 ▾";
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--gold);
+    font-weight:400;
+  }
+  .panel[open] > summary::after{ content:"접기 ▴"; }
+
+  .panel-body{ padding: 4px 16px 18px; }
+  .panel-body .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 10px;
+    margin-bottom:10px;
+  }
+  .panel-body .grid .full{ grid-column:1 / -1; }
+  .panel-body label{
+    display:block;
+    font-size:10.5px;
+    color:rgba(246,241,226,0.6);
+    margin-bottom:4px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .panel-body input, .panel-body select{
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.15);
+    color:var(--paper);
+  }
+  .panel-body input::placeholder{ color:rgba(246,241,226,0.35); }
+
+  .btn{
+    width:100%;
+    padding:10px;
+    background:var(--gold);
+    color:var(--green-darker);
+    border:none;
+    border-radius:4px;
+    font-weight:700;
+    font-size:13.5px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+
+  .custom-list{ margin-top:14px; }
+  .custom-list .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:12.5px;
+    padding:6px 0;
+    border-bottom:1px dashed rgba(255,255,255,0.12);
+  }
+  .custom-list .row button{
+    background:none;
+    border:none;
+    color:var(--red);
+    cursor:pointer;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  @media (max-width:420px){
+    .receipt{ padding:24px 18px 34px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand">
+    <div class="eyebrow">Same Buzz, Different Bottle</div>
+    <h1>주류 환산 영수증</h1>
+    <p>한 병 마신 만큼, 다른 술로는 몇 병일까?<br>순수 알코올량을 기준으로 계산해드려요.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="receiptTab" type="button">환산 영수증</button>
+    <button class="tab-btn" data-tab="counterTab" type="button">오늘 마신 술 카운터</button>
+  </div>
+
+  <div class="stage tab-panel" id="receiptTab">
+    <div class="receipt" id="receipt">
+      <div class="r-head">
+        <div class="store">주 류 환 산 소</div>
+        <div class="sub">ALCOHOL EXCHANGE RECEIPT</div>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="field">
+        <label for="sourceSelect">기준 주류</label>
+        <select id="sourceSelect"></select>
+      </div>
+      <div class="qty-row">
+        <div class="field">
+          <label for="qtyInput">마신 수량</label>
+          <input type="number" id="qtyInput" value="1" min="0.1" step="0.1">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 0; color:var(--ink-soft);" id="unitLabel">병</div>
+        </div>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="hero">
+        <div class="label">TOTAL PURE ALCOHOL</div>
+        <div class="value" id="heroValue">0.0<span> mL</span></div>
+        <div class="sub" id="heroSub">약 0.0 g · 소주잔(50mL) 기준 0.0잔</div>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="list-title"><span>품목</span><span>환산 수량</span></div>
+      <div id="resultList"></div>
+
+      <div class="r-foot">
+        <div class="barcode" id="barcode"></div>
+        <div class="stamp" id="stamp"></div>
+        <div class="thanks">건강한 음주 되세요 🍻</div>
+      </div>
+    </div>
+
+    <details class="panel">
+      <summary>내 술 직접 추가하기</summary>
+      <div class="panel-body">
+        <div class="grid">
+          <div class="full">
+            <label>이름</label>
+            <input type="text" id="cName" placeholder="예: 좋은데이">
+          </div>
+          <div>
+            <label>도수 (%)</label>
+            <input type="number" id="cAbv" placeholder="예: 16.5" step="0.1">
+          </div>
+          <div>
+            <label>용량 (mL)</label>
+            <input type="number" id="cVol" placeholder="예: 360">
+          </div>
+          <div>
+            <label>단위</label>
+            <input type="text" id="cUnit" placeholder="병 / 캔 / 잔">
+          </div>
+          <div>
+            <label>분류</label>
+            <select id="cCat">
+              <option value="소주">소주</option>
+              <option value="탄산주">탄산주</option>
+              <option value="맥주">맥주</option>
+              <option value="막걸리">막걸리</option>
+              <option value="와인">와인</option>
+              <option value="양주">양주</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" id="addBtn">목록에 추가</button>
+        <div class="custom-list" id="customList"></div>
+      </div>
+    </details>
+
+    <p class="note">
+      도수·용량은 2026년 7월 기준 공개 자료를 참고했으며, 제조사 리뉴얼로 수시로 바뀔 수 있어요.
+      정확한 비교가 필요하면 위 패널에서 직접 도수를 수정해 추가해 주세요.
+    </p>
+  </div>
+
+  <div class="stage tab-panel" id="counterTab" style="display:none">
+    <div class="receipt" id="counterCard">
+      <div class="r-head">
+        <div class="store">오 늘 의 음 주 기 록</div>
+        <div class="sub">TONIGHT&#39;S TALLY SHEET</div>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="field">
+        <label for="counterAddSelect">마신 술 담기</label>
+        <div class="add-row">
+          <select id="counterAddSelect"></select>
+          <button class="btn add" id="counterAddBtn" type="button">+ 담기</button>
+        </div>
+      </div>
+
+      <div class="list-title" id="tapGridTitle" style="display:none;"><span>오늘 마신 술</span><span>잔 수</span></div>
+      <div id="tapGrid"></div>
+
+      <div style="text-align:center; margin-top:6px;">
+        <button class="btn ghost" id="resetCounts" type="button">전체 초기화</button>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="field">
+        <label for="counterRefSelect">환산 기준 주류</label>
+        <select id="counterRefSelect"></select>
+      </div>
+
+      <div class="hero">
+        <div class="label">오늘 마신 순수 알코올</div>
+        <div class="value" id="counterHeroValue">0.0<span> mL</span></div>
+        <div class="sub" id="counterHeroSub">약 0.0 g</div>
+      </div>
+
+      <div class="hero" style="padding-top:2px;">
+        <div class="label">기준 주류로 환산하면</div>
+        <div class="value" id="counterRefValue" style="color:var(--dew);">0.0<span> 병</span></div>
+      </div>
+
+      <hr class="dashed">
+
+      <div class="list-title"><span>내역</span><span></span></div>
+      <div id="counterBreakdown"></div>
+
+      <div class="r-foot">
+        <div class="stamp" id="counterStamp"></div>
+        <div class="thanks">천천히, 즐겁게 🌙</div>
+      </div>
+    </div>
+
+    <p class="note">
+      &#39;1잔&#39; 기준 용량은 술 종류별 통상적인 잔 크기(소주 50mL · 맥주 200mL · 막걸리 140mL · 와인 150mL · 위스키 30mL 등)를 사용해요.
+      실제로 마신 잔이 더 크거나 작다면 참고용으로만 봐주세요.
+    </p>
+  </div>
+
+<script>
+(function(){
+  const CATEGORY_COLOR = {
+    '소주': 'var(--so-soju)',
+    '탄산주': 'var(--dew)',
+    '맥주': 'var(--so-beer)',
+    '막걸리': 'var(--so-tak)',
+    '와인': 'var(--so-wine)',
+    '양주': '#8a6d3b',
+    '기타': '#888'
+  };
+
+  const DEFAULT_DRINKS = [
+    { id:'chamisul_fresh',    name:'참이슬 후레쉬',   abv:15.7, volume:360, unit:'병', category:'소주' },
+    { id:'chamisul_original', name:'참이슬 오리지널', abv:20.1, volume:360, unit:'병', category:'소주' },
+    { id:'chum_churum',       name:'처음처럼',        abv:16.0, volume:360, unit:'병', category:'소주' },
+    { id:'jinro_is_back',     name:'진로이즈백',      abv:16.0, volume:360, unit:'병', category:'소주' },
+    { id:'iseul_toktok',      name:'이슬톡톡',        abv:3.0,  volume:355, unit:'캔', category:'탄산주' },
+    { id:'cass',              name:'카스 프레시',     abv:4.5,  volume:500, unit:'병', category:'맥주' },
+    { id:'terra',             name:'테라',            abv:4.6,  volume:500, unit:'병', category:'맥주' },
+    { id:'hite',              name:'하이트',          abv:4.3,  volume:500, unit:'병', category:'맥주' },
+    { id:'makgeolli',         name:'막걸리(일반)',    abv:6.0,  volume:750, unit:'병', category:'막걸리' },
+  ];
+
+  let drinks = DEFAULT_DRINKS.slice();
+  let customIds = [];
+  const ALCOHOL_DENSITY = 0.789; // g/mL
+
+  // 술 종류별 통상적인 '1잔' 용량(mL) — 카운터 탭에서 사용
+  const GLASS_DEFAULT = {
+    '소주': 50,
+    '탄산주': 200,
+    '맥주': 200,
+    '막걸리': 140,
+    '와인': 150,
+    '양주': 30,
+    '기타': 100
+  };
+  function glassOf(d){ return d.glass || GLASS_DEFAULT[d.category] || 100; }
+
+  let counts = {}; // { drinkId: 마신 잔 수 }
+  let tonightIds = []; // 오늘 내가 직접 담은 술 id (순서 유지)
+
+  const sourceSelect = document.getElementById('sourceSelect');
+  const qtyInput = document.getElementById('qtyInput');
+  const unitLabel = document.getElementById('unitLabel');
+  const heroValue = document.getElementById('heroValue');
+  const heroSub = document.getElementById('heroSub');
+  const resultList = document.getElementById('resultList');
+  const barcode = document.getElementById('barcode');
+  const stamp = document.getElementById('stamp');
+  const customListEl = document.getElementById('customList');
+  const tapGrid = document.getElementById('tapGrid');
+  const tapGridTitle = document.getElementById('tapGridTitle');
+  const counterAddSelect = document.getElementById('counterAddSelect');
+  const counterAddBtn = document.getElementById('counterAddBtn');
+  const counterRefSelect = document.getElementById('counterRefSelect');
+  const counterHeroValue = document.getElementById('counterHeroValue');
+  const counterHeroSub = document.getElementById('counterHeroSub');
+  const counterRefValue = document.getElementById('counterRefValue');
+  const counterBreakdown = document.getElementById('counterBreakdown');
+  const counterStamp = document.getElementById('counterStamp');
+
+  function pureAlcoholML(d){ return d.volume * d.abv / 100; }
+
+  function fillSelect(selectEl){
+    const prev = selectEl.value;
+    selectEl.innerHTML = drinks.map(d =>
+      `<option value="${d.id}">${d.name} (${d.abv}%, ${d.volume}mL)</option>`
+    ).join('');
+    if (drinks.some(d => d.id === prev)) selectEl.value = prev;
+  }
+
+  function renderSelect(){
+    fillSelect(sourceSelect);
+    fillSelect(counterRefSelect);
+    fillSelect(counterAddSelect);
+  }
+
+  function renderBarcode(){
+    barcode.innerHTML = '';
+    for(let i=0;i<38;i++){
+      const bar = document.createElement('i');
+      const w = [2,2,4,2,6,2,2,4][i % 8];
+      bar.style.width = w + 'px';
+      bar.style.opacity = Math.random() > 0.15 ? '1' : '0.15';
+      barcode.appendChild(bar);
+    }
+  }
+
+  function renderStamp(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    stamp.textContent = `계산일시 ${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  function renderCustomList(){
+    if (customIds.length === 0){ customListEl.innerHTML = ''; return; }
+    customListEl.innerHTML = customIds.map(id => {
+      const d = drinks.find(x => x.id === id);
+      if (!d) return '';
+      return `<div class="row"><span>${d.name} · ${d.abv}% · ${d.volume}mL</span><button data-del="${id}">삭제</button></div>`;
+    }).join('');
+    customListEl.querySelectorAll('button[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-del');
+        drinks = drinks.filter(d => d.id !== id);
+        customIds = customIds.filter(x => x !== id);
+        delete counts[id];
+        tonightIds = tonightIds.filter(x => x !== id);
+        renderSelect();
+        renderCustomList();
+        renderTapGrid();
+        compute();
+        computeCounter();
+      });
+    });
+  }
+
+  function renderTapGrid(){
+    tapGridTitle.style.display = tonightIds.length ? 'flex' : 'none';
+
+    if (tonightIds.length === 0){
+      tapGrid.innerHTML = '<div class="bk-empty">위에서 마신 술을 골라 "담기"를 눌러 시작하세요.</div>';
+      return;
+    }
+
+    tapGrid.innerHTML = tonightIds.map(id => {
+      const d = drinks.find(x => x.id === id);
+      if (!d) return '';
+      const n = counts[id] || 0;
+      const color = CATEGORY_COLOR[d.category] || CATEGORY_COLOR['기타'];
+      return `
+        <div class="tap-item" data-tap="${d.id}">
+          <span class="dot" style="background:${color}"></span>
+          <span class="info">
+            <span class="n">${d.name} <span class="cnt">(${n}잔)</span></span><br>
+            <span class="m">1잔 ${glassOf(d)}mL · ${d.abv}%</span>
+          </span>
+          <div class="stepper">
+            <button class="step minus" data-minus="${d.id}" type="button" aria-label="${d.name} 한 잔 빼기">−</button>
+            <button class="step plus" data-plus="${d.id}" type="button" aria-label="${d.name} 한 잔 추가">+</button>
+          </div>
+          <button class="remove" data-remove="${d.id}" type="button" aria-label="${d.name} 목록에서 삭제">×</button>
+        </div>`;
+    }).join('');
+  }
+
+  function computeCounter(){
+    const ref = drinks.find(d => d.id === counterRefSelect.value) || drinks[0];
+    let totalML = 0;
+    const rows = [];
+    tonightIds.forEach(id => {
+      const d = drinks.find(x => x.id === id);
+      const n = counts[id] || 0;
+      if (d && n > 0){
+        const ml = n * glassOf(d) * d.abv / 100;
+        totalML += ml;
+        rows.push({ d, n, ml });
+      }
+    });
+    const grams = totalML * ALCOHOL_DENSITY;
+    const refCount = totalML / pureAlcoholML(ref);
+
+    counterHeroValue.innerHTML = `${totalML.toFixed(1)}<span> mL</span>`;
+    counterHeroSub.textContent = `약 ${grams.toFixed(1)} g`;
+    counterRefValue.innerHTML = `${refCount.toFixed(1)}<span> ${ref.unit}</span>`;
+
+    if (rows.length === 0){
+      counterBreakdown.innerHTML = '<div class="bk-empty">아직 기록된 술이 없어요. 위에서 마신 술을 터치해 보세요.</div>';
+    } else {
+      counterBreakdown.innerHTML = rows.map(r =>
+        `<div class="bk-row"><span>${r.d.name} × ${r.n}잔</span><span class="amt">${r.ml.toFixed(1)}mL 알코올</span></div>`
+      ).join('');
+    }
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    counterStamp.textContent = `기록시각 ${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  function changeCount(id, delta){
+    counts[id] = Math.max((counts[id] || 0) + delta, 0);
+    renderTapGrid();
+    computeCounter();
+  }
+
+  function addTonight(id){
+    if (!tonightIds.includes(id)) tonightIds.push(id);
+    counts[id] = (counts[id] || 0) + 1;
+    renderTapGrid();
+    computeCounter();
+  }
+
+  function removeTonight(id){
+    tonightIds = tonightIds.filter(x => x !== id);
+    delete counts[id];
+    renderTapGrid();
+    computeCounter();
+  }
+
+  counterAddBtn.addEventListener('click', () => {
+    if (counterAddSelect.value) addTonight(counterAddSelect.value);
+  });
+
+  tapGrid.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('[data-remove]');
+    if (removeBtn){
+      removeTonight(removeBtn.getAttribute('data-remove'));
+      return;
+    }
+    const minusBtn = e.target.closest('[data-minus]');
+    if (minusBtn){
+      changeCount(minusBtn.getAttribute('data-minus'), -1);
+      return;
+    }
+    const plusBtn = e.target.closest('[data-plus]');
+    if (plusBtn){
+      changeCount(plusBtn.getAttribute('data-plus'), +1);
+      return;
+    }
+    const item = e.target.closest('[data-tap]');
+    if (item){
+      changeCount(item.getAttribute('data-tap'), +1);
+    }
+  });
+
+  document.getElementById('resetCounts').addEventListener('click', () => {
+    counts = {};
+    tonightIds = [];
+    renderTapGrid();
+    computeCounter();
+  });
+
+  counterRefSelect.addEventListener('change', computeCounter);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.getAttribute('data-tab');
+      document.getElementById('receiptTab').style.display = target === 'receiptTab' ? 'flex' : 'none';
+      document.getElementById('counterTab').style.display = target === 'counterTab' ? 'flex' : 'none';
+    });
+  });
+
+  function compute(){
+    const source = drinks.find(d => d.id === sourceSelect.value) || drinks[0];
+    unitLabel.textContent = source.unit;
+    const qty = Math.max(parseFloat(qtyInput.value) || 0, 0);
+    const totalML = pureAlcoholML(source) * qty;
+    const grams = totalML * ALCOHOL_DENSITY;
+    const shots = totalML / 50; // 소주잔 50mL 기준
+
+    heroValue.innerHTML = `${totalML.toFixed(1)}<span> mL</span>`;
+    heroSub.textContent = `약 ${grams.toFixed(1)} g · 소주잔(50mL) 기준 ${shots.toFixed(1)}잔`;
+
+    const others = drinks.filter(d => d.id !== source.id);
+    resultList.innerHTML = others.map(d => {
+      const count = totalML / pureAlcoholML(d);
+      const color = CATEGORY_COLOR[d.category] || CATEGORY_COLOR['기타'];
+      return `
+        <div class="line">
+          <span class="dot" style="background:${color}"></span>
+          <span class="name">${d.name}</span>
+          <span class="fill"></span>
+          <span class="amt">${count.toFixed(1)} <small>${d.unit}</small></span>
+        </div>`;
+    }).join('');
+
+    renderBarcode();
+    renderStamp();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const name = document.getElementById('cName').value.trim();
+    const abv = parseFloat(document.getElementById('cAbv').value);
+    const volume = parseFloat(document.getElementById('cVol').value);
+    const unit = document.getElementById('cUnit').value.trim() || '개';
+    const category = document.getElementById('cCat').value;
+
+    if (!name || !abv || !volume || abv <= 0 || volume <= 0){
+      alert('이름, 도수, 용량을 정확히 입력해 주세요.');
+      return;
+    }
+    const id = 'custom_' + Date.now();
+    drinks.push({ id, name, abv, volume, unit, category });
+    customIds.push(id);
+
+    document.getElementById('cName').value = '';
+    document.getElementById('cAbv').value = '';
+    document.getElementById('cVol').value = '';
+    document.getElementById('cUnit').value = '';
+
+    renderSelect();
+    sourceSelect.value = id;
+    renderCustomList();
+    renderTapGrid();
+    compute();
+    computeCounter();
+  });
+
+  sourceSelect.addEventListener('change', compute);
+  qtyInput.addEventListener('input', compute);
+
+  renderSelect();
+  renderCustomList();
+  renderTapGrid();
+  compute();
+  computeCounter();
+})();
+</script>
+</body>
+</html>
